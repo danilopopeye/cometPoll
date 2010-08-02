@@ -1,13 +1,14 @@
 (function(){
 	window.CPoll= {
 		url: '/broadcast/sub?channel=',
-
 		init: function(){
 			$('poll-form').addEvent('submit', this.submit);
 
 			this.request();
 
-			console.info('CPoll initialized', this.channel);
+			this.build();
+
+			console.info('CPoll initialized on channel: ', this.channel);
 		},
 		submit: function(e){
 			e.stop();
@@ -26,17 +27,24 @@
 			}).send();
 		},
 		request: function(){
-			var self = this;
+			var self = this, data = this.data;
 			new Request.JSON({
 				url: this.url + this.channel,
 				method: 'GET',
 				onSuccess: function(json){
 					// get the server modified header
-					self.lastModified = this.getHeader('Last-Modified');
+					var last = this.getHeader('Last-Modified');
 
-					console.info( self.lastModified, json );
+					self.lastModified = last != self.lastModified
+						? last : new Date( +Date.parse( last ) + 1000 ).toGMTString();
 
-					$('poll-response').set('html', json.message);
+					if( $type( json.vote ) == 'string' ){
+						// TODO: refactor this, it's ugly :(
+						data.total = ++data.total;
+						data.choices[ json.vote ].votes = ++data.choices[ json.vote ].votes;
+
+						self.build();
+					}
 
 					setTimeout( self.request.bind(self), 100 );
 				}
@@ -47,6 +55,15 @@
 
 			// send the request
 			.send();
+		},
+		build: function(first){
+			var self = this, total = this.data.total;
+
+			$each(this.data.choices, function(c, i){
+				var id = c.id;
+				$('choice-' + id).getElement('b').set('html', c.votes);
+				$('bar-' + id).tween('width', c.votes * 400 / total );
+			});
 		}
 	};
 

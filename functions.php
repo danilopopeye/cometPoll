@@ -83,7 +83,11 @@ function query( $query ){
 		$data = array();
 
 		while( $buf = mysql_fetch_assoc( $result ) ){
-			$data[] = $buf;
+			if( isset( $buf['id'] ) ){
+				$data[ $buf['id'] ] = $buf;
+			} else {
+				$data[] = $buf;
+			}
 		}
 
 		return array(

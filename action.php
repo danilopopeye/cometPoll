@@ -14,7 +14,7 @@ if( isset( $_POST['vote'] ) ){
 
 	if( $ins['status'] === TRUE ){
 		CPush( $channel, array(
-			'id' => $id
+			'vote' => $id
 		) );
 	}
 }
